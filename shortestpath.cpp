@@ -94,25 +94,25 @@ auto determin(point& a, point& b)
    }
    else if( ( a_pos == diagy || a_pos == yz ) && ( b_pos == diagx || b_pos == zx ) )
    {
-
       b.y = -b.x; 
       b.x = 0;    
    }
    else if( ( b_pos == diagy || b_pos == yz ) && ( a_pos == diagx || a_pos == zx ) )
    {
-     
-
       a.y = -a.x;
       a.x = 0;     
    }
    else if(a_pos == diagz && b_pos == diagy)
    {
       a.y = -a.z;
+      a.z = 0;
    }
    else if(b_pos == diagz && a_pos == diagy)
    {
       b.y = -b.z;
+      b.z = 0;
    }
+
 
    return std::max({std::abs(a.x-b.x),std::abs(a.y-b.y),std::abs(a.z-b.z)}) ; 
 }
@@ -132,10 +132,22 @@ int main()
    test(1,22,3);
    test(19,18,1);
    test(5,11,3);
+   test(5,19,3);
+   test(15,11,4);
    test(20,13,5);
    test(13,20,5);
    test(17,9,4);
    test(11,18,4);
    test(12,16,3);
+   test(19,1,2);
+   test(1,11,2);
+   test(17,11,4);
+   test(10000,2,57);
+   test(22,14,5);
+   test(14,22,5);
+   test(15,9,4);
+   test(1,10,2);
+   test(37,19,1);
+   test(34,11,5);
    return 0; 
 }

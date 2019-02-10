@@ -12,7 +12,17 @@ typedef struct point_t
 	int z;
 }point;
 
-std::vector<point> transform(int n, int i)
+typedef enum plane_t
+{
+   xy=0,
+   yz=1,
+   zx=2,
+   diagx=3,
+   diagy=4,
+   diagz=5
+}plane;
+
+auto transform(int n, int i)
 {
    //assert(n>i); 
    std::vector<point> m;
@@ -25,16 +35,19 @@ auto compute(int target)
   auto n = 1;
   do 
   {
-    if ( n*n*n >= target ) 
+    if ( target <= ((n*n*n) - (n-1)*(n-1)*(n-1)) ) 
 	 break;
   }while(++n);
 
   n = (n-1)?(n-1):1;   
- 
+
   auto residual = target - ((n*n*n) - (n-1)*(n-1)*(n-1)) ;
+
   auto k = residual / n;
   auto i = residual % n;
- 
+
+  if(target==1) { n = 0; i = 0; }
+
   auto cordinate = transform(n,i);
 
   k = k % 6;
@@ -44,22 +57,85 @@ auto compute(int target)
 
 }
 
-static bool abs_(int a, int b)
+auto determine_plane(point& pt)
 {
-  return (std::abs(a) < std::abs(b));
+    if( !pt.x && !pt.y )    return diagz;
+    if( !pt.y && !pt.z )    return diagx;
+    if( !pt.z && !pt.x)    return diagy;
+    if( !pt.z && pt.x && pt.y ) return xy;
+    if( !pt.x && pt.y && pt.z ) return yz;
+    if( !pt.y && pt.z && pt.x ) return zx;
 }
 
-int main()
+auto determin(point& a, point& b)
 {
-  unsigned int src,dest;
-  std::cin >> src >> dest;
-  //unsigned int src = 19;
-  //unsigned int dest = 30; 
-  std::cout<< src << " " <<dest<<std::endl;
+   auto a_pos = determine_plane(a);
+   auto b_pos = determine_plane(b);
+   
+   if( (  a_pos == xy ) && ( b_pos == diagz || b_pos == zx ) )
+   {
+      b.y = -b.z; 
+      b.z = 0;    
+   }
+   else if( ( b_pos == xy ) && ( a_pos == diagz || a_pos == zx ) )
+   {
+      a.y = -a.z;
+      a.z = 0;     
+   }
+   else if( ( a_pos == diagx || a_pos == xy ) && ( b_pos == diagz || b_pos == yz ) )
+   {
+      b.x = -b.z;
+      b.z = 0;     
+   }
+   else if( ( b_pos == diagx || b_pos == xy ) && ( a_pos == diagz || a_pos == yz ) )
+   {
+      a.x = -a.z;
+      b.z = 0;    
+   }
+   else if( ( a_pos == diagy || a_pos == yz ) && ( b_pos == diagx || b_pos == zx ) )
+   {
+
+      b.y = -b.x; 
+      b.x = 0;    
+   }
+   else if( ( b_pos == diagy || b_pos == yz ) && ( a_pos == diagx || a_pos == zx ) )
+   {
+     
+
+      a.y = -a.x;
+      a.x = 0;     
+   }
+   else if(a_pos == diagz && b_pos == diagy)
+   {
+      a.y = -a.z;
+   }
+   else if(b_pos == diagz && a_pos == diagy)
+   {
+      b.y = -b.z;
+   }
+
+   return std::max({std::abs(a.x-b.x),std::abs(a.y-b.y),std::abs(a.z-b.z)}) ; 
+}
+
+void test(unsigned int src, unsigned int dest, unsigned int expected)
+{
+
   auto a = compute(src);
   auto b = compute(dest);
-  //std::cout<< "shortest steps is : " << std::abs(a.x-b.x)+std::abs(a.y-b.y)+std::abs(a.z-b.z)-1 <<std::endl;
-  std::cout << " shortest steps is : "<< std::max({std::abs(a.x-b.x),std::abs(a.y-b.y),std::abs(a.z-b.z)})
-	      + std::min({std::abs(a.x-b.x),std::abs(a.y-b.y),std::abs(a.z-b.z)}) <<std::endl;
-  return 0; 
+  auto result = determin(a,b);
+  std::cout<< src << "-->" << dest<< ",shortest step is : " << result 
+      <<" expected: "<< expected << ".result: "<< ((result == expected)?("TRUE"):("FALSE")) << std::endl;
+}
+int main()
+{
+   test(1,19,2);
+   test(1,22,3);
+   test(19,18,1);
+   test(5,11,3);
+   test(20,13,5);
+   test(13,20,5);
+   test(17,9,4);
+   test(11,18,4);
+   test(12,16,3);
+   return 0; 
 }

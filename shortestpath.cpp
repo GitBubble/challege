@@ -71,15 +71,16 @@ auto determin(point& a, point& b)
 {
    auto a_pos = determine_plane(a);
    auto b_pos = determine_plane(b);
-   
+   auto discend = 0;
+
    if( (  a_pos == xy ) && ( b_pos == diagz || b_pos == zx ) )
    {
-      b.y = -b.z; 
+      discend += b.z;
       b.z = 0;    
    }
    else if( ( b_pos == xy ) && ( a_pos == diagz || a_pos == zx ) )
    {
-      a.y = -a.z;
+      discend += a.z;
       a.z = 0;     
    }
    else if( ( a_pos == diagx || a_pos == xy ) && ( b_pos == diagz || b_pos == yz ) )
@@ -113,8 +114,7 @@ auto determin(point& a, point& b)
       b.z = 0;
    }
 
-
-   return std::max({std::abs(a.x-b.x),std::abs(a.y-b.y),std::abs(a.z-b.z)}) ; 
+   return std::max({std::abs(a.x-b.x),std::abs(a.y-b.y),std::abs(a.z-b.z)}) + discend ; 
 }
 
 void test(unsigned int src, unsigned int dest, unsigned int expected)
@@ -149,5 +149,10 @@ int main()
    test(1,10,2);
    test(37,19,1);
    test(34,11,5);
+   test(20,32,5);
+   test(20,16,4);
+   test(14,20,5);
+   test(15,20,5);
+   test(21,16,4);
    return 0; 
 }

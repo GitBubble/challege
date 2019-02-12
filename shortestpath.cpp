@@ -1,144 +1,104 @@
-// n^3 - (n-1)^3 + k*n + i  ( k[0,5], i[1,6] )
-
+#include <cmath>
 #include <iostream>
-#include <algorithm>
-#include <vector>
-#include <initializer_list>
 
+static unsigned int g_maxvalue = 100000;   
 static unsigned int passed = 0;
-static unsigned int failed = 0;
-
-typedef struct point_t
+static unsigned int failed = 0; 
+ 
+void transform(int seq_num,int *x,int *y,int *z)
 {
-	int x;
-	int y;
-	int z;
-}point;
+	int cycle_num = 0;   
+	int current_seq_num =1;  
+ 
 
-typedef enum plane_t
-{
-   xy=0,
-   yz=1,
-   zx=2,
-   diagx=3,
-   diagy=4,
-   diagz=5
-}plane;
-
-auto transform(int n, int i)
-{
-   //assert(n>i); 
-   std::vector<point> m;
-   m= { {n, i, 0}, {n-i, n ,0}, {0,n,i}, {0,n-i,n}, {i,0,n}, {n,0,n-i} };
-   return m;
+	while(current_seq_num < seq_num)
+	{
+		cycle_num++;
+		current_seq_num = current_seq_num + cycle_num * 6; 
+	}
+ 
+	if(cycle_num == 0)
+	{
+		*x = 0;
+		*y = 0;
+		*z = 0;
+		return ;
+	}
+ 
+	int side_num = (current_seq_num - seq_num) / cycle_num + 1;
+ 
+	int side_pos = (current_seq_num - seq_num) % cycle_num;
+	
+	switch(side_num)
+	{
+	case 1:
+		*x = cycle_num;
+		*y = -cycle_num + side_pos;
+		*z = side_pos;
+		break;
+	case 2:
+		*x = cycle_num - side_pos;
+		*y = side_pos;
+		*z = cycle_num;
+		break;
+	case 3:
+		*x = -side_pos;
+		*y = cycle_num; 
+		*z = cycle_num - side_pos;
+		break;
+	case 4:
+		*x = -cycle_num;
+		*y = cycle_num - side_pos;
+		*z = - side_pos;
+		break;
+	case 5:
+		*x = -cycle_num + side_pos;
+		*y = -side_pos;
+		*z = -cycle_num;
+		break;
+	case 6:
+		*x = side_pos;
+		*y = -cycle_num;
+		*z = -cycle_num + side_pos;
+		break;
+	}
 }
 
-auto compute(int target)
+int determin(int iFirstValue, int iSecondValue)
 {
-  auto n = 1;
-  do 
-  {
-    if ( target <= ((n*n*n) - (n-1)*(n-1)*(n-1)) ) 
-	 break;
-  }while(++n);
-
-  n = (n-1)?(n-1):1;   
-
-  auto residual = target - ((n*n*n) - (n-1)*(n-1)*(n-1)) ;
-
-  auto k = residual / n;
-  auto i = residual % n;
-
-  if(target==1) { n = 0; i = 0; }
-
-  auto cordinate = transform(n,i);
-
-  k = k % 6;
-
-  std::cout<< cordinate[k].x << "  " << cordinate[k].y << "  " << cordinate[k].z << std::endl;
-  return cordinate[k];
-
+	if(iFirstValue > g_maxvalue || iFirstValue < 1 || iSecondValue > g_maxvalue || iSecondValue < 1)
+	{
+		return -1;
+	}
+ 
+	int x_1 = 0;
+	int y_1 = 0;
+	int z_1 = 0;
+	int x_2 = 0;
+	int y_2 = 0;
+	int z_2 = 0;
+	transform(iFirstValue,&x_1,&y_1,&z_1);  
+	transform(iSecondValue,&x_2,&y_2,&z_2);
+ 
+	int distance_x = (x_1 > x_2)? (x_1 - x_2):(x_2 - x_1);
+	int distance_y = (y_1 > y_2)? (y_1 - y_2):(y_2 - y_1);
+	int distance_z = (z_1 > z_2)? (z_1 - z_2):(z_2 - z_1);
+ 
+	int shortest_distance = distance_x > distance_y? distance_x:distance_y;
+	shortest_distance = shortest_distance > distance_z? shortest_distance:distance_z;
+ 
+	return shortest_distance;
 }
-
-auto determine_plane(point& pt)
-{
-    if( !pt.x && !pt.y )    return diagz;
-    if( !pt.y && !pt.z )    return diagx;
-    if( !pt.z && !pt.x)    return diagy;
-    if( !pt.z && pt.x && pt.y ) return xy;
-    if( !pt.x && pt.y && pt.z ) return yz;
-    if( !pt.y && pt.z && pt.x ) return zx;
-}
-
-auto determin(point& a, point& b)
-{
-   auto a_pos = determine_plane(a);
-   auto b_pos = determine_plane(b);
-   auto discend = 0;
-   auto offsetx = (a.x-b.x)?(a.x-b.x):(1);
-   auto offsety = (a.y-b.y)?(a.y-b.y):(1);
-   auto offsetz = (a.z-b.z)?(a.z-b.z):(1);
-   
-   if( (a_pos == b_pos)&& (offsetx*offsety*offsetz < 0))
-   {
-      return std::abs(a.x-b.x)+std::abs(a.y-b.y)+std::abs(a.z-b.z);
-   }
-   else
-   {
-      if( (  a_pos == xy ) && ( b_pos == diagz || b_pos == zx ) )
-      {
-         discend += b.z;
-         b.z = 0;    
-      }
-      else if( ( b_pos == xy ) && ( a_pos == diagz || a_pos == zx ) )
-      {
-         discend += a.z;
-         a.z = 0;     
-      }// scenaro-1:  a(xy) -- b(z, zx) 
-      if( (  a_pos == xy ) && ( b_pos == diagz || b_pos == yz ) )
-      {
-         discend += b.z;
-         b.z = 0;    
-      }
-      else if( ( b_pos == xy ) && ( a_pos == diagz || a_pos == yz ) )
-      {
-         discend += a.z;
-         a.z = 0;     
-      }// scenaro-2:  a(xy) -- b(z,yz)
-      else if( (a_pos == yz ) && ( b_pos == zx ) )
-      {
-         b.y = -b.x; 
-         b.x = 0;    
-      }
-      else if( ( b_pos == yz ) && ( a_pos == zx ) )
-      {
-         a.y = -a.x;
-         a.x = 0;     
-      }
-      else if(a_pos == diagz && b_pos == diagy)
-      {
-         a.y = -a.z;
-         a.z = 0;
-      }
-      else if(b_pos == diagz && a_pos == diagy)
-      {
-         b.y = -b.z;
-         b.z = 0;
-      }
-
-      return std::max({std::abs(a.x-b.x),std::abs(a.y-b.y),std::abs(a.z-b.z)}) + discend ; 
-   }
-}
-
+ 
 void test(unsigned int src, unsigned int dest, unsigned int expected)
 {
-  auto a = compute(src);
-  auto b = compute(dest);
-  auto result = determin(a,b);
+  
+  auto result = determin(src,dest);
   std::cout<< src << "-->" << dest<< ",shortest step is : " << result 
       <<" expected: "<< expected << ".result: "<< ((result == expected)?("TRUE"):("FALSE")) << std::endl;
   (result == expected)?(++passed):(++failed);
 }
+
 int main()
 {
    test(1,19,2);

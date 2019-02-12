@@ -148,6 +148,16 @@ int main()
    test(86,26,8);
    test(82,26,7);
    test(19,26,5);
+   std::cout<<std::endl;
+    int a,b;   
+    while(1)
+   {
+        std::cin >>a;
+        std::cin >>b;
+        test(a,b,0);
+      
+   }
+
    std::cout<< "\ntest cases total: "<< passed + failed << std::endl;
    std::cout <<std::endl<<"\033[1;32m"<<passed << " cases passed!"<<"\033[1;31m\n"<<failed << " cases failed!\033[0m "<<std::endl;
    return 0; 

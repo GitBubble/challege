@@ -5,6 +5,9 @@
 #include <vector>
 #include <initializer_list>
 
+static unsigned int passed = 0;
+static unsigned int failed = 0;
+
 typedef struct point_t
 {
 	int x;
@@ -72,59 +75,69 @@ auto determin(point& a, point& b)
    auto a_pos = determine_plane(a);
    auto b_pos = determine_plane(b);
    auto discend = 0;
+   auto offsetx = (a.x-b.x)?(a.x-b.x):(1);
+   auto offsety = (a.y-b.y)?(a.y-b.y):(1);
+   auto offsetz = (a.z-b.z)?(a.z-b.z):(1);
+   
+   if( (a_pos == b_pos)&& (offsetx*offsety*offsetz < 0))
+   {
+      return std::abs(a.x-b.x)+std::abs(a.y-b.y)+std::abs(a.z-b.z);
+   }
+   else
+   {
+      if( (  a_pos == xy ) && ( b_pos == diagz || b_pos == zx ) )
+      {
+         discend += b.z;
+         b.z = 0;    
+      }
+      else if( ( b_pos == xy ) && ( a_pos == diagz || a_pos == zx ) )
+      {
+         discend += a.z;
+         a.z = 0;     
+      }// scenaro-1:  a(xy) -- b(z, zx) 
+      if( (  a_pos == xy ) && ( b_pos == diagz || b_pos == yz ) )
+      {
+         discend += b.z;
+         b.z = 0;    
+      }
+      else if( ( b_pos == xy ) && ( a_pos == diagz || a_pos == yz ) )
+      {
+         discend += a.z;
+         a.z = 0;     
+      }// scenaro-2:  a(xy) -- b(z,yz)
+      else if( (a_pos == yz ) && ( b_pos == zx ) )
+      {
+         b.y = -b.x; 
+         b.x = 0;    
+      }
+      else if( ( b_pos == yz ) && ( a_pos == zx ) )
+      {
+         a.y = -a.x;
+         a.x = 0;     
+      }
+      else if(a_pos == diagz && b_pos == diagy)
+      {
+         a.y = -a.z;
+         a.z = 0;
+      }
+      else if(b_pos == diagz && a_pos == diagy)
+      {
+         b.y = -b.z;
+         b.z = 0;
+      }
 
-   if( (  a_pos == xy ) && ( b_pos == diagz || b_pos == zx ) )
-   {
-      discend += b.z;
-      b.z = 0;    
+      return std::max({std::abs(a.x-b.x),std::abs(a.y-b.y),std::abs(a.z-b.z)}) + discend ; 
    }
-   else if( ( b_pos == xy ) && ( a_pos == diagz || a_pos == zx ) )
-   {
-      discend += a.z;
-      a.z = 0;     
-   }
-   else if( ( a_pos == diagx || a_pos == xy ) && ( b_pos == diagz || b_pos == yz ) )
-   {
-      b.x = -b.z;
-      b.z = 0;     
-   }
-   else if( ( b_pos == diagx || b_pos == xy ) && ( a_pos == diagz || a_pos == yz ) )
-   {
-      a.x = -a.z;
-      b.z = 0;    
-   }
-   else if( ( a_pos == diagy || a_pos == yz ) && ( b_pos == diagx || b_pos == zx ) )
-   {
-      b.y = -b.x; 
-      b.x = 0;    
-   }
-   else if( ( b_pos == diagy || b_pos == yz ) && ( a_pos == diagx || a_pos == zx ) )
-   {
-      a.y = -a.x;
-      a.x = 0;     
-   }
-   else if(a_pos == diagz && b_pos == diagy)
-   {
-      a.y = -a.z;
-      a.z = 0;
-   }
-   else if(b_pos == diagz && a_pos == diagy)
-   {
-      b.y = -b.z;
-      b.z = 0;
-   }
-
-   return std::max({std::abs(a.x-b.x),std::abs(a.y-b.y),std::abs(a.z-b.z)}) + discend ; 
 }
 
 void test(unsigned int src, unsigned int dest, unsigned int expected)
 {
-
   auto a = compute(src);
   auto b = compute(dest);
   auto result = determin(a,b);
   std::cout<< src << "-->" << dest<< ",shortest step is : " << result 
       <<" expected: "<< expected << ".result: "<< ((result == expected)?("TRUE"):("FALSE")) << std::endl;
+  (result == expected)?(++passed):(++failed);
 }
 int main()
 {
@@ -154,5 +167,28 @@ int main()
    test(14,20,5);
    test(15,20,5);
    test(21,16,4);
+   test(32,18,3);
+   test(30,12,3);
+   test(20,10,3);
+   test(11,15,4);
+   test(30,12,3);
+   test(49,13,2);
+   test(43,64,4);
+   test(80,43,8);
+   test(28,5,3);
+   test(26,30,4);
+   // -45 degree
+   test(62,9,4);
+   // -45 degree
+   test(62,22,4);
+   test(56,46,7);
+   test(54,26,6);
+   test(52,18,5);
+   test(88,26,8);
+   test(86,26,8);
+   test(82,26,7);
+   test(19,26,5);
+   std::cout<< "\ntest cases total: "<< passed + failed << std::endl;
+   std::cout <<std::endl<<"\033[1;32m"<<passed << " cases passed!"<<"\033[1;31m\n"<<failed << " cases failed!\033[0m "<<std::endl;
    return 0; 
 }
